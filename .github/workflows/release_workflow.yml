@@ -1,0 +1,43 @@
+name: NetBeans Module Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build NetBeans module
+        run: mvn clean install
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: New release of the NetBeans module
+          draft: false
+          prerelease: false
+
+      - name: Upload NBM Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: nbm-artifact
+          path: target/PSClipboard-${{ github.ref }}.nbm
+
+      - name: Get Artifact URL
+        id: get_artifact_url
+        run: |
+          echo "::set-output name=url::${{ steps.create_release.outputs.upload_url }}"
+
+      - name: Provide NBM Download Link
+        run: |
+          echo "Download the NetBeans module NBM file: ${{ steps.get_artifact_url.outputs.url }}"
